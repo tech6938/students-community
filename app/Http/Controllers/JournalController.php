@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 class JournalController extends Controller
 {
-    
+
     // ✅ CREATE (you already have this)
     public function store(Request $request)
     {
@@ -37,8 +37,10 @@ class JournalController extends Controller
 
         $journal = Journal::create($data);
 
-        return response()->json($journal);
-    }
+return response()->json([
+    'message' => 'Journal created successfully',
+    'data' => $journal
+]);    }
 
     // 📖 READ (ALL)
     public function index()
@@ -102,8 +104,10 @@ class JournalController extends Controller
 
         $journal->update($data);
 
-        return response()->json($journal);
-    }
+return response()->json([
+    'message' => 'Journal updated successfully',
+    'data' => $journal
+]);    }
 
 
     public function destroy($id)

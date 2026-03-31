@@ -16,6 +16,22 @@ class Journal extends Model
         'link_to_buzz',
         'user_id'
     ];
-    //accessor for complete url -> img
+
+    protected $hidden = ['img'];
+
+    protected $appends = ['img_url'];
+
+    protected $casts = [
+        'category'   => 'integer',
+        'rating'     => 'float',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+ public function getImgUrlAttribute(): ?string
+{
+    if (!$this->img) return null;
+
+    return asset('storage/' . $this->img) ?: null;
 }
-    
+}
