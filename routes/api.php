@@ -36,22 +36,30 @@ Route::middleware('auth:sanctum')->prefix('story')->controller(StoryController::
 
 Route::middleware('auth:sanctum')->prefix('profile')->controller(ProfileController::class)->group(function () {
 
-        Route::get('/all', 'index');
-        Route::get('/show/{id}', 'show');
-        Route::post('/create', 'store');
-        Route::post('/update/{id}', 'update');
-        Route::delete('/delete/{id}', 'destroy');
+        Route::get('/show', 'show');      // get my profile
+        Route::post('/create', 'store');  // create profile
+        Route::post('/update', 'update'); // update my profile
+        Route::delete('/delete', 'destroy'); // delete my profile
     });
 
 
-Route::middleware('auth:sanctum')->prefix('photos')->controller(PublicPhotoController::class)->group(function () {
+// Route::middleware('auth:sanctum')->prefix('profile')->controller(ProfileController::class)->group(function () {
 
-        Route::get('/all/{profileId}', 'index');
-        Route::post('/upload', 'store');
-        Route::post('/update/{id}', 'update');
-        Route::delete('/delete/{id}', 'destroy');
-    });
+//         // Route::get('/all', 'index');
+//         Route::get('/show', 'show');
+//         Route::post('/create', 'store');
+//         Route::post('/update/{id}', 'update');
+//         Route::delete('/delete/{id}', 'destroy');
+//     });
+
+
+// Route::middleware('auth:sanctum')->prefix('photos')->controller(PublicPhotoController::class)->group(function () {
+
+//         Route::get('/all/{profileId}', 'index');
+//         Route::post('/upload', 'store');
+//         Route::post('/update/{id}', 'update');
+//         Route::delete('/delete/{id}', 'destroy');
+//     });
 
 
 
-    

@@ -4,32 +4,43 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
     use App\Helpers\ApiResponse;
+    use Illuminate\Support\Facades\Auth;
     use Exception;
 use App\Models\Profile;
 use App\Models\PublicPhoto;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 class ProfileController extends Controller
 {
 
 
-public function index()
+// public function index()
+
+
+// {
+//     try {
+//         $profiles = Profile::with('photos')->latest()->get();
+
+//         return ApiResponse::success(
+//             'Profiles retrieved successfully',
+//             $profiles
+//         );
+
+//     } catch (Exception $e) {
+//         return ApiResponse::error('Failed to fetch profiles');
+//     }
+// }
+
+
+
+public function show()
 {
     try {
-        $profiles = Profile::with('photos')->latest()->get();
+        $user = Auth::user();
 
-        return ApiResponse::success(
-            'Profiles retrieved successfully',
-            $profiles
-        );
-
-    } catch (Exception $e) {
-        return ApiResponse::error('Failed to fetch profiles');
-    }
-}
-
-public function show($id)
-{
-    try {
-        $profile = Profile::with('photos')->findOrFail($id);
+        // return $user->id;
+        $profile = Profile::where('user_id', $user->id)->with('photos')->get();
+        // return $profile;
 
         return ApiResponse::success(
             'Profile retrieved successfully',
@@ -40,6 +51,7 @@ public function show($id)
         return ApiResponse::error('Profile not found', 404);
     }
 }
+
 
 public function store(Request $request)
 {
@@ -57,11 +69,34 @@ public function store(Request $request)
             'current_city' => 'nullable|string|max:255',
             'languages' => 'nullable|array',
             'interests' => 'nullable|array',
+
+            // 👇 images validation
+            'images' => 'nullable|array|max:3',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $data['user_id'] = auth()->id();
+        DB::beginTransaction();
 
+        // ✅ Create profile
+        $data['user_id'] = auth()->id();
         $profile = Profile::create($data);
+
+        // ✅ Store images if exist
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+
+                $path = $image->store('public/photos');
+
+                $profile->photos()->create([
+                    'image' => $path
+                ]);
+            }
+        }
+
+        DB::commit();
+
+        // ✅ Load photos relation
+        $profile->load('photos');
 
         return ApiResponse::success(
             'Profile created successfully',
@@ -70,30 +105,31 @@ public function store(Request $request)
         );
 
     } catch (Exception $e) {
+
+        DB::rollBack();
+
         return ApiResponse::error('Profile creation failed');
     }
+    
 }
 
-public function update(Request $request, $id)
+public function update(Request $request)
 {
     try {
-        $profile = Profile::findOrFail($id);
+        $profile = auth()->user()->profile;
 
-        if ($profile->user_id !== auth()->id()) {
-            return ApiResponse::error('Unauthorized', 403);
+        if (!$profile) {
+            return ApiResponse::error('Profile not found', 404);
         }
 
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'home_school' => 'nullable|string|max:255',
-            'abroad_school' => 'nullable|string|max:255',
             'home_city' => 'nullable|string|max:255',
-            'current_city' => 'nullable|string|max:255',
             'languages' => 'nullable|array',
             'interests' => 'nullable|array',
         ]);
 
-        unset($data['username']); // ❌ prevent update
+        unset($data['username']); // ❌ still protected
 
         $profile->update($data);
 
@@ -107,20 +143,19 @@ public function update(Request $request, $id)
     }
 }
 
-public function destroy($id)
+public function destroy()
 {
     try {
-        $profile = Profile::findOrFail($id);
+        $profile = auth()->user()->profile;
 
-        if ($profile->user_id !== auth()->id()) {
-            return ApiResponse::error('Unauthorized', 403);
+        if (!$profile) {
+            return ApiResponse::error('Profile not found', 404);
         }
 
         $profile->delete();
 
         return ApiResponse::success(
-            'Profile deleted successfully',
-            null
+            'Profile deleted successfully'
         );
 
     } catch (Exception $e) {
