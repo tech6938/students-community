@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JournalController;
@@ -8,34 +7,32 @@ use App\Http\Controllers\StoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPhotoController;
 
-// Auth email check on login/sign-up
+// Auth
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::delete('/auth', [AuthController::class, 'delete']);
 
-// journals crud
-Route::middleware('auth:sanctum')->prefix('journal')->controller(JournalController::class)->group(function () {
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
 
-        Route::get('/all', 'index');              // GET /api/journal/all
-        Route::get('/show/{id}', 'show');             // GET /api/journal/1
-        Route::post('/create', 'store');         // POST /api/journal/create
-        Route::post('/update/{id}', 'update');   // POST /api/journal/update/1
-        Route::delete('/delete/{id}', 'destroy'); // DELETE /api/journal/delete/1
-
+    /*
+    |--------------------------------------------------------------------------
+    | Journals
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('journal')->controller(JournalController::class)->group(function () {
+        Route::get('/all', 'index');
+        Route::get('/show/{id}', 'show');
+        Route::post('/create', 'store');
+        Route::post('/update/{id}', 'update');   // keeping POST as you had
+        Route::delete('/delete/{id}', 'destroy');
     });
 
-Route::middleware('auth:sanctum')->prefix('story')->controller(StoryController::class)->group(function () {
-
-    Route::get('/all', 'index');
-    Route::get('/show/{id}', 'show');
-    Route::post('/create', 'store');
-    Route::post('/update/{id}', 'update');
-    Route::delete('/delete/{id}', 'destroy');
-
-});
-
-
-Route::middleware('auth:sanctum')->prefix('profile')->controller(ProfileController::class)->group(function () {
-
+    /*
+    |--------------------------------------------------------------------------
+    | Stories
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('story')->controller(StoryController::class)->group(function () {
         Route::get('/all', 'index');
         Route::get('/show/{id}', 'show');
         Route::post('/create', 'store');
@@ -43,15 +40,29 @@ Route::middleware('auth:sanctum')->prefix('profile')->controller(ProfileControll
         Route::delete('/delete/{id}', 'destroy');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Profiles
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('profile')->controller(ProfileController::class)->group(function () {
+        Route::get('/all', 'index');
+        Route::get('/show/{id}', 'show');
+        Route::post('/create', 'store');
+        Route::post('/update/{id}', 'update');
+        Route::delete('/delete/{id}', 'destroy');
+    });
 
-Route::middleware('auth:sanctum')->prefix('photos')->controller(PublicPhotoController::class)->group(function () {
-
+    /*
+    |--------------------------------------------------------------------------
+    | Photos
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('photos')->controller(PublicPhotoController::class)->group(function () {
         Route::get('/all/{profileId}', 'index');
         Route::post('/upload', 'store');
         Route::post('/update/{id}', 'update');
         Route::delete('/delete/{id}', 'destroy');
     });
 
-
-
-    
+});
