@@ -14,6 +14,7 @@ class User extends Authenticatable
 
     protected $fillable = ['email'];
 
+<<<<<<< HEAD
 
     public function profile()
 {
@@ -21,3 +22,6 @@ class User extends Authenticatable
 }
 }
 
+=======
+}  
+>>>>>>> abuzar

@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\VolunteerController;
+use App\Http\Controllers\admin\AuthController;
+use App\Http\Controllers\admin\VolunteerController;
 use App\Http\Middleware\AuthMiddleware;
 use Illuminate\Support\Facades\Route;
 
