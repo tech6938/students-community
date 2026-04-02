@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Models\Story;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,8 +37,8 @@ class StoryController extends Controller
 
 
         if ($request->has('tags') && is_string($request->tags)) {  // ADD THIS
-    $data['tags'] = json_decode($request->tags, true);      // ADD THIS
-}     
+            $data['tags'] = json_decode($request->tags, true);      // ADD THIS
+        }
 
         if ($request->hasFile('img')) {
             $data['img'] = $request->file('img')->store('stories', 'public');
@@ -55,93 +57,116 @@ class StoryController extends Controller
     // 📖 GET ALL
     public function index()
     {
-        $stories = Story::where('user_id', auth()->id())->get();
+        try {
+            $stories = Story::where('user_id', auth()->id())->get();
 
-        return response()->json($stories);
+            return ApiResponse::success(
+                'Story retrieved successfully',
+                $stories
+            );
+        } catch (Exception $e) {
+            return ApiResponse::error('Story not found', 404);
+        }
     }
 
     // 🔍 GET ONE
     public function show($id)
     {
-        $story = Story::where('user_id', auth()->id())
-                      ->where('id', $id)
-                      ->first();
+        try {
+            $story = Story::where('user_id', auth()->id())
+                ->where('id', $id)
+                ->first();
 
-        if (!$story) {
-            return response()->json(['message' => 'Not found'], 404);
+            if (!$story) {
+                return response()->json(['message' => 'Not found'], 404);
+            }
+
+            return ApiResponse::success(
+                'Stories retrieved successfully',
+                $story
+            );
+        } catch (Exception $e) {
+            return ApiResponse::error('Profile not found', 404);
         }
-
-        return response()->json($story);
     }
 
     // ✏️ UPDATE
     public function update(Request $request, $id)
     {
-        $story = Story::where('user_id', auth()->id())
-                      ->where('id', $id)
-                      ->first();
+        try {
+            $story = Story::where('user_id', auth()->id())
+                ->where('id', $id)
+                ->first();
 
-        if (!$story) {
-            return response()->json(['message' => 'Not found'], 404);
-        }
-
-        $request->validate([
-            'post_type' => 'sometimes|integer',
-            'title' => 'sometimes',
-            'desc' => 'sometimes',
-            'place' => 'sometimes',
-            'tags' => 'sometimes|array',
-            'tags.*' => 'string',
-            'img' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
-            'post_as' => 'sometimes',
-            'link_to_journal' => 'sometimes|boolean'
-        ]);
-
-        $data = $request->only([
-            'post_type',
-            'title',
-            'desc',
-            'place',
-            'tags',
-            'post_as',
-            'link_to_journal'
-        ]);
-
-        if ($request->hasFile('img')) {
-            if ($story->img) {
-                Storage::disk('public')->delete($story->img);
+            if (!$story) {
+                return response()->json(['message' => 'Not found'], 404);
             }
 
-            $data['img'] = $request->file('img')->store('stories', 'public');
+            $request->validate([
+                'post_type' => 'sometimes|integer',
+                'title' => 'sometimes',
+                'desc' => 'sometimes',
+                'place' => 'sometimes',
+                'tags' => 'sometimes|array',
+                'tags.*' => 'string',
+                'img' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
+                'post_as' => 'sometimes',
+                'link_to_journal' => 'sometimes|boolean'
+            ]);
+
+            $data = $request->only([
+                'post_type',
+                'title',
+                'desc',
+                'place',
+                'tags',
+                'post_as',
+                'link_to_journal'
+            ]);
+
+            if ($request->hasFile('img')) {
+                if ($story->img) {
+                    Storage::disk('public')->delete($story->img);
+                }
+
+                $data['img'] = $request->file('img')->store('stories', 'public');
+            }
+
+            $story->update($data);
+
+            return ApiResponse::success(
+                'Stories retrieved successfully',
+                $story
+            );
+        } catch (Exception $e) {
+            return ApiResponse::error('Story not found', 404);
         }
-
-        $story->update($data);
-
-        return response()->json([
-            'message' => 'Story updated successfully',
-            'data' => $story
-        ]);
     }
 
     // ❌ DELETE
     public function destroy($id)
     {
-        $story = Story::where('user_id', auth()->id())
-                      ->where('id', $id)
-                      ->first();
+        try {
+            $story = Story::where('user_id', auth()->id())
+                ->where('id', $id)
+                ->first();
 
-        if (!$story) {
-            return response()->json(['message' => 'Not found'], 404);
+            if (!$story) {
+                return response()->json(['message' => 'Not found'], 404);
+            }
+
+            if ($story->img) {
+                Storage::disk('public')->delete($story->img);
+            }
+
+            $story->delete();
+
+            return ApiResponse::success(
+                'Stories retrieved successfully',
+                $story
+            );
+        } catch (Exception $e) {
+            return ApiResponse::error('Story not found', 404);
         }
-
-        if ($story->img) {
-            Storage::disk('public')->delete($story->img);
-        }
-
-        $story->delete();
-
-        return response()->json([
-            'message' => 'Story deleted successfully'
-        ]);
     }
 }

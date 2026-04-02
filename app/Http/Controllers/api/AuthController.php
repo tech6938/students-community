@@ -20,12 +20,16 @@ class AuthController extends Controller
             // Check user
             $user = User::where('email', $request->email)->first();
 
+            $isNewUser = false;
+
             if (!$user) {
                 // REGISTER
                 $user = User::create([
                     'email' => $request->email,
                     'profile_status' => 0,
                 ]);
+
+                $isNewUser = true;
             }
 
             // LOGIN (token)
@@ -33,7 +37,9 @@ class AuthController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Authenticated successfully',
+                'message' => $isNewUser
+                    ? 'User registered successfully'
+                    : 'User login successfully',
                 'token' => $token,
                 'user' => $user,
             ], 200);
@@ -42,7 +48,7 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage() // remove in production if needed
+                'error' => $e->getMessage() // remove in production
             ], 500);
         }
     }

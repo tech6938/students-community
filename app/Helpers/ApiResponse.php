@@ -6,7 +6,7 @@ class ApiResponse
     public static function success($message, $data = null, $code = 200)
     {
         $response = [
-            'success' => true,
+            'status' => true,
             'message' => $message,
         ];
 
@@ -20,7 +20,7 @@ class ApiResponse
     public static function error($message, $code = 500, $error = null)
     {
         $response = [
-            'success' => false,
+            'status' => false,
             'message' => $message,
         ];
 
@@ -30,4 +30,4 @@ class ApiResponse
 
         return response()->json($response, $code);
     }
-}   
+}
