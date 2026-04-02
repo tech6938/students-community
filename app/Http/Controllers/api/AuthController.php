@@ -23,7 +23,8 @@ class AuthController extends Controller
             if (!$user) {
                 // REGISTER
                 $user = User::create([
-                    'email' => $request->email
+                    'email' => $request->email,
+                    'profile_status' => 0,
                 ]);
             }
 
@@ -33,8 +34,8 @@ class AuthController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Authenticated successfully',
+                'token' => $token,
                 'user' => $user,
-                'token' => $token
             ], 200);
 
         } catch (Throwable $e) {

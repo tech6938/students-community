@@ -12,9 +12,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['email'];
+    protected $fillable = ['email', 'profile_status'];
+    protected $hidden = ['created_at', 'updated_at'];
 
-<<<<<<< HEAD
 
     public function profile()
 {
@@ -22,6 +22,3 @@ class User extends Authenticatable
 }
 }
 
-=======
-}  
->>>>>>> abuzar

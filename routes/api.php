@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\CommunityController;
 use App\Http\Controllers\api\FirendController;
+use App\Http\Controllers\api\HiveBoardController;
+use App\Http\Controllers\api\LocalController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoryController;
@@ -13,6 +16,22 @@ Route::delete('/auth', [AuthController::class, 'delete']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::apiResource('hive-boards', HiveBoardController::class);
+    Route::apiResource('communities', CommunityController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Friends
+    |--------------------------------------------------------------------------
+    */
+    Route::get('locals', [LocalController::class, 'getLocal']);
+    Route::controller(FirendController::class)->group(function () {
+        Route::post('addFriend', 'addFriend');
+        Route::get('incoming-requests', 'incomingRequests');
+        Route::get('friend-list', 'friendList');
+        Route::post('accept-friend', 'acceptFriend');
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -49,20 +68,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/create', 'store');  // create profile
         Route::post('/update', 'update'); // update my profile
         Route::delete('/delete', 'destroy'); // delete my profile
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Friends
-    |--------------------------------------------------------------------------
-    */
-    Route::controller(FirendController::class)->group(function () {
-        Route::post('addFriend', 'addFriend');
-        // check requests
-        Route::get('incoming-requests', 'incomingRequests');
-        // friendList
-        Route::get('friend-list', 'friendList');
-        // acceptFriend
-        Route::post('accept-friend', 'acceptFriend');
     });
 });
