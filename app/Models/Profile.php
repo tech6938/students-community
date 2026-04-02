@@ -16,14 +16,24 @@ class Profile extends Model
         'current_city',
         'languages',
         'interests',
-        
+        'profile_img',
     ];
+
+    protected $appends = ['profile_img_url'];
+
+public function getProfileImgUrlAttribute()
+{
+    return $this->profile_img
+        ? asset($this->profile_img)
+        : null;
+}
 
     // ✅ Cast JSON fields
     protected $casts = [
         'languages' => 'array',
         'interests' => 'array',
     ];
+
 
     // ✅ Relationship: Profile belongs to User
     public function user()
