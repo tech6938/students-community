@@ -110,7 +110,7 @@ public function store(Request $request)
 
         return ApiResponse::error('Profile creation failed');
     }
-    
+
 }
 
 public function update(Request $request)
