@@ -1,12 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\AuthController;
-use App\Http\Controllers\JournalController;
-use App\Http\Controllers\Api\HiveBoardController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\FirendController;
+use App\Http\Controllers\Api\HiveBoardController;
 use App\Http\Controllers\api\LocalController;
+use App\Http\Controllers\JournalController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
 // Auth email check on login/sign-up
 Route::post('/auth', [AuthController::class, 'auth']);
@@ -36,3 +37,34 @@ Route::middleware('auth:sanctum')->group(function () {
     // acceptFriend
     Route::post('accept-friend', [FirendController::class, 'acceptFriend']);
 });
+
+
+Route::middleware('auth:sanctum')->prefix('profile')->controller(ProfileController::class)->group(function () {
+
+        Route::get('/show', 'show');      // get my profile
+        Route::post('/create', 'store');  // create profile
+        Route::post('/update', 'update'); // update my profile
+        Route::delete('/delete', 'destroy'); // delete my profile
+    });
+
+
+// Route::middleware('auth:sanctum')->prefix('profile')->controller(ProfileController::class)->group(function () {
+
+//         // Route::get('/all', 'index');
+//         Route::get('/show', 'show');
+//         Route::post('/create', 'store');
+//         Route::post('/update/{id}', 'update');
+//         Route::delete('/delete/{id}', 'destroy');
+//     });
+
+
+// Route::middleware('auth:sanctum')->prefix('photos')->controller(PublicPhotoController::class)->group(function () {
+
+//         Route::get('/all/{profileId}', 'index');
+//         Route::post('/upload', 'store');
+//         Route::post('/update/{id}', 'update');
+//         Route::delete('/delete/{id}', 'destroy');
+//     });
+
+
+
