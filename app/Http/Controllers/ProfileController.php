@@ -13,42 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
-
-    // public function index()
-    // {
-    //     try {
-    //         $profiles = Profile::with('photos')->latest()->get();
-    //         return ApiResponse::success(
-    //             'Profiles retrieved successfully',
-    //             $profiles
-    //         );
-    //     } catch (Exception $e) {
-    //         return ApiResponse::error('Failed to fetch profiles');
-    //     }
-    // }
-
-    // public function index()
-
-            // return $user->id;
-            // $profile = Profile::where('user_id', $user->id)->with('photos')->get();
-            // return $profile;
-
-    // {
-    //     try {
-    //         $profiles = Profile::with('photos')->latest()->get();
-
-    //         return ApiResponse::success(
-    //             'Profiles retrieved successfully',
-    //             $profiles
-    //         );
-
-    //     } catch (Exception $e) {
-    //         return ApiResponse::error('Failed to fetch profiles');
-    //     }
-    // }
-
-
-
     public function show()
     {
         try {
