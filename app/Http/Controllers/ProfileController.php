@@ -14,25 +14,18 @@ use Illuminate\Support\Facades\DB;
 class ProfileController extends Controller
 {
 
-
     // public function index()
-
-
     // {
     //     try {
     //         $profiles = Profile::with('photos')->latest()->get();
-
     //         return ApiResponse::success(
     //             'Profiles retrieved successfully',
     //             $profiles
     //         );
-
     //     } catch (Exception $e) {
     //         return ApiResponse::error('Failed to fetch profiles');
     //     }
     // }
-
-
 
     public function show()
     {
@@ -52,7 +45,6 @@ class ProfileController extends Controller
         }
     }
 
-
     public function store(Request $request)
     {
         try {
@@ -61,18 +53,18 @@ class ProfileController extends Controller
             }
 
             $data = $request->validate([
-                'name' => 'required|string|max:255',
-                'username' => 'required|string|max:255|unique:profiles,username',
-                'home_school' => 'nullable|string|max:255',
+                'name'          => 'required|string|max:255',
+                'username'      => 'required|string|max:255|unique:profiles,username',
+                'home_school'   => 'nullable|string|max:255',
                 'abroad_school' => 'nullable|string|max:255',
-                'home_city' => 'nullable|string|max:255',
-                'current_city' => 'nullable|string|max:255',
-                'languages' => 'nullable|array',
-                'interests' => 'nullable|array',
+                'home_city'     => 'nullable|string|max:255',
+                'current_city'  => 'nullable|string|max:255',
+                'languages'     => 'nullable|array',
+                'interests'     => 'nullable|array',
 
                 // 👇 images validation
-                'images' => 'nullable|array|max:3',
-                'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+                'images'        => 'nullable|array|max:3',
+                'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
             DB::beginTransaction();
@@ -84,14 +76,13 @@ class ProfileController extends Controller
                 'profile_status' => 1
             ]);
 
-            // ✅ Store images if exist
+            // ✅ Store images to public/photos
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-
-                    $path = $image->store('public/photos');
-
+                    $filename = time() . '_' . $image->getClientOriginalName();
+                    $image->move(public_path('photos'), $filename);
                     $profile->photos()->create([
-                        'image' => $path
+                        'image' => url('photos/' . $filename)
                     ]);
                 }
             }
@@ -114,34 +105,50 @@ class ProfileController extends Controller
         }
     }
 
-    public function update(Request $request)
-    {
-        try {
-            $profile = auth()->user()->profile;
+  public function update(Request $request)
+{
+    try {
+        $profile = auth()->user()->profile;
 
-            if (!$profile) {
-                return ApiResponse::error('Profile not found', 404);
-            }
-
-            $data = $request->validate([
-                'name' => 'sometimes|string|max:255',
-                'home_city' => 'nullable|string|max:255',
-                'languages' => 'nullable|array',
-                'interests' => 'nullable|array',
-            ]);
-
-            unset($data['username']); // ❌ still protected
-
-            $profile->update($data);
-
-            return ApiResponse::success(
-                'Profile updated successfully',
-                $profile
-            );
-        } catch (Exception $e) {
-            return ApiResponse::error('Profile update failed');
+        if (!$profile) {
+            return ApiResponse::error('Profile not found', 404);
         }
+
+        $data = $request->validate([
+            'name'      => 'sometimes|string|max:255',
+            'home_city' => 'nullable|string|max:255',
+            'languages' => 'nullable|array',
+            'interests' => 'nullable|array',
+            'images'    => 'nullable|array|max:3',
+            'images.*'  => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        unset($data['username']); // ❌ still protected
+
+        $profile->update($data);
+
+        // ✅ Store new images to public/photos
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $filename = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('photos'), $filename);
+                $profile->photos()->create([
+                    'image' => url('photos/' . $filename)
+                ]);
+            }
+        }
+
+        // ✅ Load photos relation
+        $profile->load('photos');
+
+        return ApiResponse::success(
+            'Profile updated successfully',
+            $profile
+        );
+    } catch (Exception $e) {
+        return ApiResponse::error('Profile update failed');
     }
+}
 
     public function destroy()
     {

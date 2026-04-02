@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -48,41 +48,22 @@ class AuthController extends Controller
         }
     }
 
-    public function delete(Request $request)
-    {
-        try {
-            $request->validate([
-                'email' => 'required|email'
-            ]);
+  public function logout(Request $request)
+{
+    try {
+        $request->user()->currentAccessToken()->delete();
 
-            // Find user
-            $user = User::where('email', $request->email)->first();
+        return response()->json([
+            'status' => true,
+            'message' => 'Logged out successfully'
+        ], 200);
 
-            if (!$user) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'User not found'
-                ], 404);
-            }
-
-            // Delete tokens
-            $user->tokens()->delete();
-
-            // Delete user
-            $user->delete();
-
-            return response()->json([
-                'status' => true,
-                'message' => 'User deleted successfully'
-            ], 200);
-
-        } catch (Throwable $e) {
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Something went wrong',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    } catch (Throwable $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 }
