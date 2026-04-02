@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\api\AuthController;
+use App\Http\Controllers\api\FirendController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoryController;
@@ -48,5 +49,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/create', 'store');  // create profile
         Route::post('/update', 'update'); // update my profile
         Route::delete('/delete', 'destroy'); // delete my profile
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Friends
+    |--------------------------------------------------------------------------
+    */
+    Route::controller(FirendController::class)->group(function () {
+        Route::post('addFriend', 'addFriend');
+        // check requests
+        Route::get('incoming-requests', 'incomingRequests');
+        // friendList
+        Route::get('friend-list', 'friendList');
+        // acceptFriend
+        Route::post('accept-friend', 'acceptFriend');
     });
 });
