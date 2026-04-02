@@ -14,9 +14,24 @@ use Illuminate\Support\Facades\DB;
 class ProfileController extends Controller
 {
 
+    // public function index()
+    // {
+    //     try {
+    //         $profiles = Profile::with('photos')->latest()->get();
+    //         return ApiResponse::success(
+    //             'Profiles retrieved successfully',
+    //             $profiles
+    //         );
+    //     } catch (Exception $e) {
+    //         return ApiResponse::error('Failed to fetch profiles');
+    //     }
+    // }
 
     // public function index()
 
+            // return $user->id;
+            // $profile = Profile::where('user_id', $user->id)->with('photos')->get();
+            // return $profile;
 
     // {
     //     try {
@@ -52,7 +67,6 @@ class ProfileController extends Controller
         }
     }
 
-
     public function store(Request $request)
     {
         try {
@@ -84,14 +98,13 @@ class ProfileController extends Controller
                 'profile_status' => 1
             ]);
 
-            // ✅ Store images if exist
+            // ✅ Store images to public/photos
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-
-                    $path = $image->store('public/photos');
-
+                    $filename = time() . '_' . $image->getClientOriginalName();
+                    $image->move(public_path('photos'), $filename);
                     $profile->photos()->create([
-                        'image' => $path
+                        'image' => url('photos/' . $filename)
                     ]);
                 }
             }

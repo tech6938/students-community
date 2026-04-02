@@ -16,6 +16,7 @@ class Profile extends Model
         'current_city',
         'languages',
         'interests',
+        
     ];
 
     // ✅ Cast JSON fields
