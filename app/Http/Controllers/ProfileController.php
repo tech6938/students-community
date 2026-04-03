@@ -9,6 +9,8 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 // use Illuminate\Support\Facades\Storage;
 class ProfileController extends Controller
 {
@@ -32,63 +34,75 @@ class ProfileController extends Controller
         }
     }
 
+
+
     public function store(Request $request)
     {
-        // dd( $request);
         try {
             if (auth()->user()->profile) {
                 return ApiResponse::error('Profile already exists', 400);
             }
 
-            $data = $request->validate([
-                'name'          => 'required|string|max:255',
-                'username'      => 'required|string|max:255|unique:profiles,username',
-                'home_school'   => 'nullable|string|max:255',
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'username' => 'required|string|max:255|unique:profiles,username',
+                'home_school' => 'nullable|string|max:255',
                 'abroad_school' => 'nullable|string|max:255',
-                'home_city'     => 'nullable|string|max:255',
-                'current_city'  => 'nullable|string|max:255',
-                'languages'     => 'nullable|array',
-                'interests'     => 'nullable|array',
-
-                // 👇 images validation
-                'images'        => 'nullable|array|max:3',
-                'images.*'      => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+                'home_city' => 'nullable|string|max:255',
+                'current_city' => 'nullable|string|max:255',
+                'languages' => 'nullable|array',
+                'interests' => 'nullable|array',
+                'images' => 'nullable|array|max:3',
+                'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
                 'profile_img' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
+            if ($validator->fails()) {
+                return ApiResponse::error($validator->errors(), 422);
+            }
+
+            $data = $validator->validated(); // ✅ FIX
+
             DB::beginTransaction();
 
-            // ✅ Handle profile image
+            // ✅ Profile image
             if ($request->hasFile('profile_img')) {
                 $file = $request->file('profile_img');
                 $filename = time() . '_profile_' . $file->getClientOriginalName();
                 $file->move(public_path('photos'), $filename);
 
-                // store path (NOT full URL)
                 $data['profile_img'] = 'photos/' . $filename;
             }
 
             // ✅ Create profile
             $data['user_id'] = auth()->id();
             $profile = Profile::create($data);
+
             auth()->user()->update([
                 'profile_status' => 1
             ]);
-            // ✅ Store multiple images
+
+            // ✅ Multiple images
             if ($request->hasFile('images')) {
+                $imageCount = 0;
+
                 foreach ($request->file('images') as $image) {
+
+                    if ($imageCount >= 3) break;
+
                     $filename = time() . '_' . $image->getClientOriginalName();
                     $image->move(public_path('photos'), $filename);
 
                     $profile->photos()->create([
                         'image' => 'photos/' . $filename
                     ]);
+
+                    $imageCount++;
                 }
             }
 
             DB::commit();
 
-            // ✅ Load photos relation
             $profile->load('photos');
 
             return ApiResponse::success(
@@ -100,7 +114,7 @@ class ProfileController extends Controller
 
             DB::rollBack();
 
-            return ApiResponse::error('Profile creation failed');
+            return ApiResponse::error($e->getMessage(), 500);
         }
     }
 
@@ -113,34 +127,78 @@ class ProfileController extends Controller
                 return ApiResponse::error('Profile not found', 404);
             }
 
-            $data = $request->validate([
-                'name'      => 'sometimes|string|max:255',
+            $validator = Validator::make($request->all(), [
+                'name' => 'sometimes|string|max:255',
                 'home_city' => 'nullable|string|max:255',
-                'home_school'   => 'nullable|string|max:255',
+                'home_school' => 'nullable|string|max:255',
                 'abroad_school' => 'nullable|string|max:255',
                 'languages' => 'nullable|array',
                 'interests' => 'nullable|array',
-                'images'    => 'nullable|array|max:3',
-                'images.*'  => 'image|mimes:jpg,jpeg,png,webp|max:2048',
-                'profile_img', // ✅ IMPORTANT
+                'images' => 'nullable|array|max:3',
+                'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+                'profile_img' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
-            unset($data['username']); // ❌ still protected
+            if ($validator->fails()) {
+                return ApiResponse::error($validator->errors(), 422);
+            }
 
+            $data = $validator->validated(); // ✅ FIX
+
+            // ❌ username not allowed
+            unset($data['username']);
+
+            // ✅ languages update
+            if ($request->has('languages')) {
+                $existing = $profile->languages ?? [];
+                foreach ($request->input('languages') as $index => $value) {
+                    $existing[$index] = $value;
+                }
+                $data['languages'] = array_values($existing);
+            }
+
+            // ✅ interests update
+            if ($request->has('interests')) {
+                $existing = $profile->interests ?? [];
+                foreach ($request->input('interests') as $index => $value) {
+                    $existing[$index] = $value;
+                }
+                $data['interests'] = array_values($existing);
+            }
+
+            // ✅ update basic data
             $profile->update($data);
 
-            // ✅ Store new images to public/photos
+            // ✅ images update
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
+
+                $existingPhotos = $profile->photos()->get();
+                $existingCount = $existingPhotos->count();
+
+                foreach ($request->file('images') as $index => $image) {
+
+                    if (!$image) continue;
+
+                    if (!isset($existingPhotos[$index]) && $existingCount >= 3) {
+                        continue;
+                    }
+
                     $filename = time() . '_' . $image->getClientOriginalName();
                     $image->move(public_path('photos'), $filename);
-                    $profile->photos()->create([
-                        'image' => url('photos/' . $filename)
-                    ]);
+
+                    if (isset($existingPhotos[$index])) {
+                        $existingPhotos[$index]->update([
+                            'image' => 'photos/' . $filename
+                        ]);
+                    } else {
+                        $existingCount++;
+                        $profile->photos()->create([
+                            'image' => 'photos/' . $filename
+                        ]);
+                    }
                 }
             }
 
-            // ✅ Load photos relation
             $profile->load('photos');
 
             return ApiResponse::success(
@@ -148,7 +206,7 @@ class ProfileController extends Controller
                 $profile
             );
         } catch (Exception $e) {
-            return ApiResponse::error('Profile update failed');
+            return ApiResponse::error($e->getMessage(), 500);
         }
     }
 

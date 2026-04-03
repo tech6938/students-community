@@ -58,7 +58,7 @@ class StoryController extends Controller
     public function index()
     {
         try {
-            $stories = Story::where('user_id', auth()->id())->get();
+            $stories = Story::all();
 
             return ApiResponse::success(
                 'Story retrieved successfully',
