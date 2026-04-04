@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Journal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Helpers\ApiResponse;
+
 class JournalController extends Controller
 {
 
@@ -37,17 +39,24 @@ class JournalController extends Controller
 
         $journal = Journal::create($data);
 
-return response()->json([
-    'message' => 'Journal created successfully',
-    'data' => $journal
-]);    }
+        return ApiResponse::success(
+            'Journal created successfully',
+            $journal,
+            201
+        );
+    }
 
     // 📖 READ (ALL)
     public function index()
     {
-        $journals = Journal::where('user_id', auth()->id())->get();
+        $journals = Journal::all();
 
-        return response()->json($journals);
+        // return response()->json($journals);
+        return ApiResponse::success(
+            'All journals retrived successfully',
+            $journals,
+            201
+        );
     }
 
     // 🔍 READ (ONE)
@@ -61,7 +70,28 @@ return response()->json([
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        return response()->json($journal);
+        return ApiResponse::success(
+            'Journal retrived successfully',
+            $journal,
+            201
+        );
+    }
+
+        // 🔍 READ By Category
+    public function getByCate($id)
+    {
+        $journal = Journal::where('category', $id)
+            ->get();
+
+        if (!$journal) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        return ApiResponse::success(
+            'Journal retrived By Category',
+            $journal,
+            201
+        );
     }
 
     // ✏️ UPDATE
@@ -104,10 +134,12 @@ return response()->json([
 
         $journal->update($data);
 
-return response()->json([
-    'message' => 'Journal updated successfully',
-    'data' => $journal
-]);    }
+        return ApiResponse::success(
+            'Journal updated successfully',
+            $journal,
+            201
+        );
+    }
 
 
     public function destroy($id)
@@ -127,7 +159,9 @@ return response()->json([
 
         $journal->delete();
 
-        return response()->json(['message' => 'Deleted successfully']);
+        return ApiResponse::success(
+            'Journal deleted successfully',
+            201
+        );
     }
-
 }

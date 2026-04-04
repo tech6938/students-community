@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Friend;
 use Illuminate\Http\Request;
@@ -19,10 +20,9 @@ class FirendController extends Controller
 
             // Prevent sending friend request to self
             if ($request->receiver_id == Auth::id()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'You cannot send a friend request to yourself.',
-                ], 400);
+                return ApiResponse::badRequest(
+                    'You cannot send a friend request to yourself.',
+                );
             }
 
             // Optional: Check if friend request already exists
@@ -31,10 +31,9 @@ class FirendController extends Controller
                 ->first();
 
             if ($existing) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Friend request already sent.',
-                ], 400);
+                return ApiResponse::badRequest(
+                    'Friend request already sent.',
+                );
             }
 
             // Create friend request
@@ -44,11 +43,10 @@ class FirendController extends Controller
                 'accepted' => false,
             ]);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Friend request sent successfully.',
-                'data' => $friend,
-            ], 201);
+            return ApiResponse::success(
+                'Friend request sent successfully.',
+                $friend
+            );
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'status' => false,
@@ -72,11 +70,10 @@ class FirendController extends Controller
                 ->where('accepted', false)
                 ->get();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Incoming friend requests retrieved successfully.',
-                'data' => $requests,
-            ], 200);
+            return ApiResponse::success(
+                'ncoming friend requests retrieved successfully.',
+                $requests
+            );
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -89,13 +86,16 @@ class FirendController extends Controller
     {
         try {
             $userId = Auth::id();
-            return $userId;
-            $requests = Friend::where('sender_id', $userId)->get();
 
+            $friends = Friend::where('sender_id', $userId)
+                ->with([
+                    'receiver.profile:id,user_id,profile_img,name,abroad_school,home_city,current_city,username'
+                ])
+                ->get();
             return response()->json([
                 'status' => true,
                 'message' => 'All friends retrieved successfully.',
-                'data' => $requests,
+                'data' => $friends,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -115,8 +115,8 @@ class FirendController extends Controller
 
             // Find the friend request
             $friendRequest = Friend::where('id', $request->friend_id)
-                ->where('receiver_id', Auth::id()) // ensure the auth user is the receiver
-                ->where('accepted', false)        // ensure it's not already accepted
+                ->where('receiver_id', Auth::id())
+                ->where('accepted', false)
                 ->first();
 
             if (!$friendRequest) {
@@ -130,11 +130,10 @@ class FirendController extends Controller
             $friendRequest->accepted = true;
             $friendRequest->save();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Friend request accepted successfully.',
-                'data' => $friendRequest,
-            ], 200);
+            return ApiResponse::success(
+                'Friend request accepted successfully.',
+                $friendRequest
+            );
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'status' => false,

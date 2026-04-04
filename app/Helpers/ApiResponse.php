@@ -30,4 +30,18 @@ class ApiResponse
 
         return response()->json($response, $code);
     }
+
+    public static function badRequest($message, $code = 400, $error = null)
+    {
+        $response = [
+            'status' => false,
+            'message' => $message,
+        ];
+
+        if (!is_null($error)) {
+            $response['data'] = $error;
+        }
+
+        return response()->json($response, $code);
+    }
 }

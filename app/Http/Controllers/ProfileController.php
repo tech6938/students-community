@@ -118,7 +118,7 @@ class ProfileController extends Controller
         }
     }
 
-    public function update(Request $request)
+public function update(Request $request)
     {
         try {
             $profile = auth()->user()->profile;
@@ -127,49 +127,39 @@ class ProfileController extends Controller
                 return ApiResponse::error('Profile not found', 404);
             }
 
-            $validator = Validator::make($request->all(), [
+            $data = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'home_city' => 'nullable|string|max:255',
                 'home_school' => 'nullable|string|max:255',
                 'abroad_school' => 'nullable|string|max:255',
                 'languages' => 'nullable|array',
                 'interests' => 'nullable|array',
+                'profile_visibility' => 'sometimes|in:friends,public,private',
                 'images' => 'nullable|array|max:3',
                 'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
                 'profile_img' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
-            if ($validator->fails()) {
-                return ApiResponse::error($validator->errors(), 422);
-            }
-
-            $data = $validator->validated(); // ✅ FIX
-
-            // ❌ username not allowed
             unset($data['username']);
 
-            // ✅ languages update
+            if ($request->has('profile_visibility')) {
+                $data['profile_visibility'] = $request->input('profile_visibility');
+            }
+
+            // ✅ Languages (replace completely)
             if ($request->has('languages')) {
-                $existing = $profile->languages ?? [];
-                foreach ($request->input('languages') as $index => $value) {
-                    $existing[$index] = $value;
-                }
-                $data['languages'] = array_values($existing);
+                $data['languages'] = $request->input('languages', []);
             }
 
-            // ✅ interests update
+            // ✅ Interests (replace completely)
             if ($request->has('interests')) {
-                $existing = $profile->interests ?? [];
-                foreach ($request->input('interests') as $index => $value) {
-                    $existing[$index] = $value;
-                }
-                $data['interests'] = array_values($existing);
+                $data['interests'] = $request->input('interests', []);
             }
 
-            // ✅ update basic data
+
             $profile->update($data);
 
-            // ✅ images update
+            // ✅ Store new images to public/photos
             if ($request->hasFile('images')) {
 
                 $existingPhotos = $profile->photos()->get();
@@ -177,20 +167,24 @@ class ProfileController extends Controller
 
                 foreach ($request->file('images') as $index => $image) {
 
-                    if (!$image) continue;
-
-                    if (!isset($existingPhotos[$index]) && $existingCount >= 3) {
+                    if (!$image)
                         continue;
+
+                    // ✅ Block if updating a new index that would exceed 3
+                    if (!isset($existingPhotos[$index]) && $existingCount >= 3) {
+                        continue; // skip adding new ones beyond limit
                     }
 
                     $filename = time() . '_' . $image->getClientOriginalName();
                     $image->move(public_path('photos'), $filename);
 
                     if (isset($existingPhotos[$index])) {
+                        // ✅ update existing image (index 0, 1, 2 only)
                         $existingPhotos[$index]->update([
                             'image' => 'photos/' . $filename
                         ]);
                     } else {
+                        // ✅ create new only if under limit
                         $existingCount++;
                         $profile->photos()->create([
                             'image' => 'photos/' . $filename
@@ -199,6 +193,7 @@ class ProfileController extends Controller
                 }
             }
 
+            // ✅ Load photos relation
             $profile->load('photos');
 
             return ApiResponse::success(
@@ -206,7 +201,7 @@ class ProfileController extends Controller
                 $profile
             );
         } catch (Exception $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::error('Profile update failed');
         }
     }
 
@@ -226,6 +221,75 @@ class ProfileController extends Controller
             );
         } catch (Exception $e) {
             return ApiResponse::error('Profile deletion failed');
+        }
+    }
+
+
+    public function getProfileByVisibility($id)
+    {
+        try {
+            $user = auth()->user();
+
+            $userProfile = User::with('profile')->find($id);
+            $profile = $userProfile->profile;
+
+            if (!$profile) {
+                return ApiResponse::error('Profile not found');
+            }
+
+            // ✅ PUBLIC
+            if ($profile->profile_visibility === 'public') {
+                return ApiResponse::success(
+                    'Profile fetched successfully',
+                    $profile
+                );
+            }
+
+            // ✅ FRIENDS
+            if ($profile->profile_visibility === 'friends') {
+
+                $friend = \DB::table('friends')
+                    ->where(function ($query) use ($user, $profile) {
+                        $query->where('sender_id', $user->id)
+                            ->where('receiver_id', $profile->user_id);
+                    })
+                    ->orWhere(function ($query) use ($user, $profile) {
+                        $query->where('sender_id', $profile->user_id)
+                            ->where('receiver_id', $user->id);
+                    })
+                    ->first();
+
+                if (!$friend) {
+                    return ApiResponse::success(
+                        'You are not friends with this user'
+                    );
+                }
+
+                // ✅ If request accepted
+                if ($friend->accepted == 1) {
+                    return ApiResponse::success(
+                        'Profile fetched successfully',
+                        $profile
+                    );
+                }
+
+                // ✅ If request pending (accepted = 0)
+                return ApiResponse::success(
+                    'Friend request not accepted yet'
+                );
+            }
+
+            // ✅ PRIVATE
+            if ($profile->profile_visibility === 'private') {
+                return ApiResponse::success(
+                    'Profile is private'
+                );
+            }
+
+            return ApiResponse::error('Invalid visibility type');
+
+        } catch (Exception $e) {
+            return ApiResponse::error('Something went wrong');
         }
     }
 }

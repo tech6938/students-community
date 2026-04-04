@@ -48,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('journal')->controller(JournalController::class)->group(function () {
         Route::get('/all', 'index');
         Route::get('/show/{id}', 'show');
+        Route::get('/show/cat/{id}', 'getByCate');
         Route::post('/create', 'store');
         Route::post('/update/{id}', 'update');   // keeping POST as you had
         Route::delete('/delete/{id}', 'destroy');
@@ -75,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/create', 'store');  // create profile
         Route::post('/update', 'update'); // update my profile
         Route::delete('/delete', 'destroy'); // delete my profile
+        Route::get('/{id}',  'getProfileByVisibility');
     });
 
 
