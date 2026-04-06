@@ -16,9 +16,11 @@ use Illuminate\Support\Facades\Route;
 // Auth email check on login/sign-up
 
 Route::controller(AuthController::class)->group(function () {
-
-    Route::post('/auth', 'auth');
+    Route::post('/send-otp', 'sendOtp');
+    Route::post('/verify-otp', 'verifyOtp');
     Route::post('/logout', 'logout')->middleware('auth:sanctum');
+
+    // Route::post('/auth', 'auth');
 });
 
 // Protected routes
