@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Buzz extends Model
 {
 
-protected $table = 'buzzes';
+    protected $table = 'buzzes';
 
     protected $fillable = [
         'user_id',
@@ -28,7 +28,10 @@ protected $table = 'buzzes';
     ];
 
 
-
+    public function getImgAttribute($value)
+    {
+        return $value ? asset($value) : null;
+    }
 
     // Relationship
     public function user()
@@ -36,4 +39,8 @@ protected $table = 'buzzes';
         return $this->belongsTo(User::class);
     }
 
+    public function ratings()
+    {
+        return $this->hasMany(BuzzRating::class, 'buzzes_id');
+    }
 }

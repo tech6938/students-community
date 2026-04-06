@@ -89,5 +89,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/update/{id}', 'update');    // POST /api/buzz/update/1
         Route::delete('/delete/{id}', 'destroy'); // DELETE /api/buzz/delete/1
 
+
+        // BUZZ RATING
+
+        Route::get('/ratings',  'ratingsIndex');
+        Route::get('/ratings/{id}',  'ratingsShow');
+        Route::post('/ratings/create',  'ratingsStore');
+        Route::post('/ratings/update/{id}',  'ratingsUpdate');
+        Route::delete('/ratings/delete/{id}', 'ratingsDestroy');
     });
 });
