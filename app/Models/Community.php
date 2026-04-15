@@ -19,17 +19,14 @@ class Community extends Model
         'link_to_journal' => 'boolean',
     ];
 
-    // 🔒 Hide original image column
     protected $hidden = [
         'img',
     ];
 
-    // ➕ Append accessor automatically
     protected $appends = [
         'file_url',
     ];
 
-    // 📸 Accessor for full image URL
     public function getFileUrlAttribute()
     {
         if ($this->img) {
@@ -37,5 +34,20 @@ class Community extends Model
         }
 
         return null;
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function savedByUsers()
+    {
+        return $this->belongsToMany(
+            User::class,                // Related model
+            'journal_communities',      // Pivot table name
+            'communities_id',           // Foreign key on pivot table
+            'user_id'                   // Related key on pivot table
+        )->withTimestamps();
     }
 }

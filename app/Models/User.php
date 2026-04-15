@@ -20,4 +20,23 @@ class User extends Authenticatable
     {
         return $this->hasOne(Profile::class);
     }
+
+    public function communities()
+    {
+        return $this->hasMany(Community::class);
+    }
+
+    /**
+     * Communities saved/added to journal by this user
+     * (through the pivot table JournalCommunitie)
+     */
+    public function savedCommunities()
+    {
+        return $this->belongsToMany(
+            Community::class,           // Related model
+            'journal_communities',      // Pivot table name
+            'user_id',                  // Foreign key on pivot table
+            'communities_id'            // Related key on pivot table
+        )->withTimestamps();
+    }
 }

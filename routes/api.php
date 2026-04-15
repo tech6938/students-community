@@ -100,4 +100,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/ratings/update/{id}',  'ratingsUpdate');
         Route::delete('/ratings/delete/{id}', 'ratingsDestroy');
     });
+
+    Route::prefix('community-to-journal')->controller(JournalCommunitieController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/create', 'store');
+        Route::delete('/destroy/{id}', 'destroy');
+    });
 });

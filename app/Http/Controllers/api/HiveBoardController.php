@@ -44,7 +44,7 @@ class HiveBoardController extends Controller
                 'title' => 'required|string|max:255',
                 'place' => 'required|string|max:255',
                 'tags' => 'nullable|array',
-                'tags.*' => 'string|max:50',
+                'tags.*' => 'string|max:5000',
                 'desc' => 'required|string',
                 'post_as' => 'required|string|max:255',
                 'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',

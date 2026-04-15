@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
-use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Http\Request;
 
 class CommunityController extends Controller
 {
@@ -70,10 +71,11 @@ class CommunityController extends Controller
         try {
             $community = Community::findOrFail($id);
 
-            return response()->json([
-                'success' => true,
-                'data' => $community
-            ]);
+            return ApiResponse::success(
+                'Community fetched successfully',
+                $community,
+                200
+            );
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,

@@ -28,10 +28,10 @@ class Journal extends Model
         'updated_at' => 'datetime',
     ];
 
- public function getImgUrlAttribute(): ?string
-{
-    if (!$this->img) return null;
+    public function getImgUrlAttribute(): ?string
+    {
+        if (!$this->img) return null;
 
-    return asset('storage/' . $this->img) ?: null;
-}
+        return asset('storage/' . $this->img) ?: null;
+    }
 }

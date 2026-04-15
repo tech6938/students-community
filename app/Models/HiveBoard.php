@@ -15,6 +15,7 @@ class HiveBoard extends Model
         'post_as',
         'file',
         'user_id',
+        'event_date',
         'link_to_journal',
     ];
 
