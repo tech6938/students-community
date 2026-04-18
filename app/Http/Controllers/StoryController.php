@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ApiResponse;
+use App\Models\JournalCommunitie;
 use App\Models\Story;
 use Exception;
 use Illuminate\Http\Request;
@@ -55,14 +56,38 @@ class StoryController extends Controller
     }
 
     // 📖 GET ALL
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $stories = Story::all();
+            $userId = $request->user()->id;
+            $data = Story::latest()->get()->map(function ($q) use ($userId) {
+
+                // ✅ Check if record exists
+                $exists = JournalCommunitie::where('user_id', $userId)
+                    ->where('stories_id', $q->id)
+                    ->exists();
+
+                return [
+                    "id" => $q->id,
+                    "user_id" => $q->user_id,
+                    "place" => $q->place,
+                    // "caption" => $q->caption,
+                    "post_as" => $q->post_as,
+                    "created_at" => $q->created_at,
+                    "updated_at" => $q->updated_at,
+                    "file_url" => $q->img
+                        ? asset('storage/' . $q->img)
+                        : null,
+
+                    // ✅ YOUR REQUIRED FIELD
+                    "link_to_journal" => $exists
+                ];
+            });
+
 
             return ApiResponse::success(
                 'Story retrieved successfully',
-                $stories
+                $data
             );
         } catch (Exception $e) {
             return ApiResponse::error('Story not found', 404);

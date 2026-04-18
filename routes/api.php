@@ -10,6 +10,7 @@ use App\Http\Controllers\api\LocalController;
 use App\Http\Controllers\BuzzController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -104,6 +105,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('community-to-journal')->controller(JournalCommunitieController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('/create', 'store');
-        Route::delete('/destroy/{id}', 'destroy');
+        Route::delete('/destroy/{type}/{id}', 'destroy');
+    });
+
+    Route::prefix('report')->controller(ReportController::class)->group(function () {
+        Route::post('/', 'store');
     });
 });

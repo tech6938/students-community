@@ -5,30 +5,77 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
+use App\Models\JournalCommunitie;
 use Exception;
 use Illuminate\Http\Request;
 
 class CommunityController extends Controller
 {
     // GET /api/communities
-    public function index()
-    {
-        try {
-            $data = Community::latest()->get();
+    // public function index()
+    // {
+    //     try {
+    //         $data = Community::latest()->get();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Communities fetched successfuly',
-                'data' => $data
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Communities fetched successfuly',
+    //             'data' => $data
+    //         ]);
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+    public function index(Request $request)
+{
+    try {
+        $userId = $request->user()->id;
+
+        $data = Community::latest()->get()->map(function ($q) use ($userId) {
+
+            // ✅ Check if record exists
+            $exists = JournalCommunitie::where('user_id', $userId)
+                ->where('communities_id', $q->id)
+                ->exists();
+
+            return [
+                "id" => $q->id,
+                "user_id" => $q->user_id,
+                "place" => $q->place,
+                "caption" => $q->caption,
+                "post_as" => $q->post_as,
+                "created_at" => $q->created_at,
+                "updated_at" => $q->updated_at,
+                "file_url" => $q->img
+                    ? asset('storage/' . $q->img)
+                    : null,
+
+                // ✅ YOUR REQUIRED FIELD
+                "link_to_journal" => $exists
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Communities fetched successfully',
+            'data' => $data
+        ]);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     // POST /api/communities
     public function store(Request $request)
@@ -39,7 +86,6 @@ class CommunityController extends Controller
                 'place' => 'required|string|max:255',
                 'caption' => 'nullable|string',
                 'post_as' => 'required|string|max:255',
-                'link_to_journal' => 'boolean'
             ]);
 
             // ✅ attach logged-in user
@@ -104,7 +150,6 @@ class CommunityController extends Controller
                 'place' => 'sometimes|required|string|max:255',
                 'caption' => 'nullable|string',
                 'post_as' => 'sometimes|required|string|max:255',
-                'link_to_journal' => 'boolean'
             ]);
 
             if ($request->hasFile('img')) {

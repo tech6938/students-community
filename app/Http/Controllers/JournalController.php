@@ -10,16 +10,17 @@ use App\Helpers\ApiResponse;
 class JournalController extends Controller
 {
 
-    // ✅ CREATE (you already have this)
+    // CREATE
     public function store(Request $request)
     {
         $request->validate([
             'category' => 'required|integer',
-            'title' => 'required',
-            'place' => 'required',
-            'rating' => 'required|numeric',
-            'notes' => 'required',
-            'img' => 'nullable|image'
+            'title'    => 'required',
+            'place'    => 'required',
+            'rating'   => 'required|numeric',
+            'notes'    => 'required',
+            'file'     => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            'video'    => 'nullable|mimes:mp4,mov,avi|max:20480'
         ]);
 
         $data = $request->only([
@@ -30,9 +31,16 @@ class JournalController extends Controller
             'notes'
         ]);
 
-        if ($request->hasFile('img')) {
-            $imagePath = $request->file('img')->store('images', 'public');
-            $data['img'] = $imagePath;
+        // 🖼️ Handle Image
+        if ($request->hasFile('file')) {
+            $imagePath = $request->file('file')->store('images', 'public');
+            $data['file'] = $imagePath;
+        }
+
+        // 🎥 Handle Video
+        if ($request->hasFile('video')) {
+            $videoPath = $request->file('video')->store('videos', 'public');
+            $data['video'] = $videoPath;
         }
 
         $data['user_id'] = auth()->id();
@@ -46,7 +54,7 @@ class JournalController extends Controller
         );
     }
 
-    // 📖 READ (ALL)
+    // READ (ALL)
     public function index()
     {
         $journals = Journal::all();
@@ -59,7 +67,7 @@ class JournalController extends Controller
         );
     }
 
-    // 🔍 READ (ONE)
+    // READ (ONE)
     public function show($id)
     {
         $journal = Journal::where('user_id', auth()->id())
@@ -77,7 +85,7 @@ class JournalController extends Controller
         );
     }
 
-        // 🔍 READ By Category
+    // READ By Category
     public function getByCate($id)
     {
         $journal = Journal::where('category', $id)

@@ -12,14 +12,15 @@ class Journal extends Model
         'place',
         'rating',
         'notes',
-        'img',
+        'file',
+        'video',
         'link_to_buzz',
         'user_id'
     ];
 
-    protected $hidden = ['img'];
+    protected $hidden = ['file', 'video'];
 
-    protected $appends = ['img_url'];
+    protected $appends = ['file_url', 'video_url'];
 
     protected $casts = [
         'category'   => 'integer',
@@ -28,10 +29,13 @@ class Journal extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function getImgUrlAttribute(): ?string
+    public function getFileUrlAttribute(): ?string
     {
-        if (!$this->img) return null;
+        return $this->file ? asset('storage/' . $this->file) : null;
+    }
 
-        return asset('storage/' . $this->img) ?: null;
+    public function getVideoUrlAttribute(): ?string
+    {
+        return $this->video ? asset('storage/' . $this->video) : null;
     }
 }

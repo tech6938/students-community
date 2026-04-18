@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\HiveBoard;
+use App\Models\JournalCommunitie;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,14 +16,39 @@ class HiveBoardController extends Controller
     /**
      * Display a listing of HiveBoards.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
-            $hiveBoards = HiveBoard::all();
+            $userId = $request->user()->id;
+
+            $data = HiveBoard::latest()->get()->map(function ($q) use ($userId) {
+
+                // ✅ Check if record exists
+                $exists = JournalCommunitie::where('user_id', $userId)
+                    ->where('hiveboards_id', $q->id)
+                    ->exists();
+
+                return [
+                    "id" => $q->id,
+                    "user_id" => $q->user_id,
+                    "place" => $q->place,
+                    // "caption" => $q->caption,
+                    "post_as" => $q->post_as,
+                    "created_at" => $q->created_at,
+                    "updated_at" => $q->updated_at,
+                    "file_url" => $q->file
+                        ? asset('storage/' . $q->file)
+                        : null,
+
+                    // ✅ YOUR REQUIRED FIELD
+                    "link_to_journal" => $exists
+                ];
+            });
+
 
             return ApiResponse::success(
                 'HiveBoards retrieved successfully',
-                $hiveBoards,
+                $data,
                 201
             );
         } catch (\Exception $e) {

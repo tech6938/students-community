@@ -4,17 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class JournalCommunitie extends Model
+class Report extends Model
 {
-    protected $table = 'journal_communities';
     protected $fillable = [
         'user_id',
-        'communities_id',
+        'type',
+        'community_id',
         'hiveboards_id',
         'stories_id',
-        'type',
+        'journal_id',
+        'issue',
+        'description',
     ];
-    protected $hidden = ['created_at', 'updated_at'];
+
+    protected $hidden = ['updated_at'];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
 
     public function user()
     {
@@ -23,12 +32,14 @@ class JournalCommunitie extends Model
 
     public function community()
     {
-        return $this->belongsTo(Community::class, 'communities_id');
+        return $this->belongsTo(Community::class, 'community_id');
     }
+
     public function hiveboard()
     {
         return $this->belongsTo(HiveBoard::class, 'hiveboards_id');
     }
+
     public function story()
     {
         return $this->belongsTo(Story::class, 'stories_id');

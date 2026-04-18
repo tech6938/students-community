@@ -11,7 +11,7 @@ class Community extends Model
         'place',
         'caption',
         'post_as',
-        'link_to_journal',
+        // 'link_to_journal',
         'user_id',
     ];
 
