@@ -53,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/show/{id}', 'show');
         Route::get('/show/cat/{id}', 'getByCate');
         Route::post('/create', 'store');
-        Route::post('/update/{id}', 'update');   // keeping POST as you had
+        Route::post('/update/{id}', 'updateJournal');   // keeping POST as you had
         Route::delete('/delete/{id}', 'destroy');
     });
 

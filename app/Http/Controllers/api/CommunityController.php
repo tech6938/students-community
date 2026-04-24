@@ -34,48 +34,47 @@ class CommunityController extends Controller
     // }
 
     public function index(Request $request)
-{
-    try {
-        $userId = $request->user()->id;
+    {
+        try {
+            $userId = $request->user()->id;
 
-        $data = Community::latest()->get()->map(function ($q) use ($userId) {
+            $data = Community::latest()->get()->map(function ($q) use ($userId) {
 
-            // ✅ Check if record exists
-            $exists = JournalCommunitie::where('user_id', $userId)
-                ->where('communities_id', $q->id)
-                ->exists();
+                // ✅ Check if record exists
+                $exists = JournalCommunitie::where('user_id', $userId)
+                    ->where('communities_id', $q->id)
+                    ->exists();
 
-            return [
-                "id" => $q->id,
-                "user_id" => $q->user_id,
-                "place" => $q->place,
-                "caption" => $q->caption,
-                "post_as" => $q->post_as,
-                "created_at" => $q->created_at,
-                "updated_at" => $q->updated_at,
-                "file_url" => $q->img
-                    ? asset('storage/' . $q->img)
-                    : null,
+                return [
+                    "id" => $q->id,
+                    "user_id" => $q->user_id,
+                    "place" => $q->place,
+                    "caption" => $q->caption,
+                    "post_as" => $q->post_as,
+                    "created_at" => $q->created_at,
+                    "updated_at" => $q->updated_at,
+                    "file_url" => $q->img
+                        ? asset('storage/' . $q->img)
+                        : null,
 
-                // ✅ YOUR REQUIRED FIELD
-                "link_to_journal" => $exists
-            ];
-        });
+                    // ✅ YOUR REQUIRED FIELD
+                    "link_to_journal" => $exists
+                ];
+            });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Communities fetched successfully',
-            'data' => $data
-        ]);
-
-    } catch (Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Something went wrong',
-            'error' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => true,
+                'message' => 'Communities fetched successfully',
+                'data' => $data
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     // POST /api/communities
     public function store(Request $request)
@@ -177,21 +176,33 @@ class CommunityController extends Controller
     {
         try {
             $community = Community::findOrFail($id);
+            $loggedInUser = request()->user();
 
-            // ✅ Only owner can delete
-            if ($community->user_id !== request()->user()->id) {
+            $isAdmin = ($loggedInUser->user_type === 'admin');
+            $isOwner = ($community->user_id === $loggedInUser->id);
+
+            if (!$isAdmin && !$isOwner) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'Unauthorized: Only admin or community owner can delete'
                 ], 403);
             }
 
             $community->delete();
 
+            $message = ($isAdmin && !$isOwner)
+                ? 'Community deleted successfully by admin'
+                : 'Community deleted successfully';
+
             return response()->json([
                 'success' => true,
-                'message' => 'Community deleted successfully'
+                'message' => $message
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Community not found'
+            ], 404);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,

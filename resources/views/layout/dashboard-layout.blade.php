@@ -69,10 +69,17 @@
                             <a href="{{ route('dashboard') }}" class="nav-link"><i data-feather="monitor"></i><span>Dashboard</span></a>
                         </li>
 
-                        <li class="dropdown {{ request()->routeIs('verse.list') ? 'active' : ' '}}">
-                            <a href="#" class="menu-toggle nav-link has-dropdown"><i data-feather="users"></i><span>Volunteers</span></a>
+                        <li class="dropdown {{ request()->routeIs('users.index') ? 'active' : ' '}}">
+                            <a href="#" class="menu-toggle nav-link has-dropdown"><i data-feather="users"></i><span>Users</span></a>
                             <ul class="dropdown-menu">
-                                <li><a class="nav-link" href="{{ route('volunteer.index') }}">Volunteers List</a></li>
+                                <li><a class="nav-link" href="{{ route('users.index') }}">Users List</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown {{ request()->routeIs('journls.index') ? 'active' : ' '}}">
+                            <a href="#" class="menu-toggle nav-link has-dropdown"><i data-feather="users"></i><span>Journals</span></a>
+                            <ul class="dropdown-menu">
+                                <li><a class="nav-link" href="{{ route('journls.index') }}">Journals List</a></li>
                             </ul>
                         </li>
 

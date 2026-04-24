@@ -38,4 +38,9 @@ class Journal extends Model
     {
         return $this->video ? asset('storage/' . $this->video) : null;
     }
+
+    public function users()
+    {
+        return $this->belongs(journal::class);
+    }
 }

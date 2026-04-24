@@ -19,8 +19,8 @@ class JournalController extends Controller
             'place'    => 'required',
             'rating'   => 'required|numeric',
             'notes'    => 'required',
-            'file'     => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
-            'video'    => 'nullable|mimes:mp4,mov,avi|max:20480'
+            'file'     => 'nullable|image|mimes:jpg,jpeg,png',
+            'video'    => 'nullable|mimes:mp4,mov,avi'
         ]);
 
         $data = $request->only([
@@ -82,6 +82,69 @@ class JournalController extends Controller
             'Journal retrived successfully',
             $journal,
             201
+        );
+    }
+
+    public function updateJournal(Request $request, $id)
+    {
+        $request->validate([
+            'category' => 'sometimes|required|integer',
+            'title'    => 'sometimes|required',
+            'place'    => 'sometimes|required',
+            'rating'   => 'sometimes|required|numeric',
+            'notes'    => 'sometimes|required',
+            'file'     => 'nullable|image|mimes:jpg,jpeg,png',
+            'video'    => 'nullable|mimes:mp4,mov,avi'
+        ]);
+
+        $loggedInUser = auth()->user();
+
+        // Only owner can update their own journal
+        $journal = Journal::where('user_id', $loggedInUser->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$journal) {
+            return ApiResponse::error('Journal not found or you are not authorized to update it', 404);
+        }
+
+        $data = $request->only([
+            'category',
+            'title',
+            'place',
+            'rating',
+            'notes'
+        ]);
+
+        // 🖼️ Handle Image Update
+        if ($request->hasFile('file')) {
+            // Delete old image if exists
+            if ($journal->file) {
+                Storage::disk('public')->delete($journal->file);
+            }
+
+            $imagePath = $request->file('file')->store('images', 'public');
+            $data['file'] = $imagePath;
+        }
+
+        // 🎥 Handle Video Update
+        if ($request->hasFile('video')) {
+            // Delete old video if exists
+            if ($journal->video) {
+                Storage::disk('public')->delete($journal->video);
+            }
+
+            $videoPath = $request->file('video')->store('videos', 'public');
+            $data['video'] = $videoPath;
+        }
+
+        // Update the journal
+        $journal->update($data);
+
+        return ApiResponse::success(
+            'Journal updated successfully',
+            $journal,
+            200
         );
     }
 
@@ -152,24 +215,38 @@ class JournalController extends Controller
 
     public function destroy($id)
     {
-        $journal = Journal::where('user_id', auth()->id())
-            ->where('id', $id)
-            ->first();
+        $loggedInUser = auth()->user();
+        $isAdmin = ($loggedInUser->user_type === 'admin');
 
-        if (!$journal) {
-            return response()->json(['message' => 'Not found'], 404);
+        if ($isAdmin) {
+            // Admin can delete any journal
+            $journal = Journal::find($id);
+        } else {
+            // Normal user can only delete their own journal
+            $journal = Journal::where('user_id', $loggedInUser->id)
+                ->where('id', $id)
+                ->first();
         }
 
-        // delete image AFTER check
+        if (!$journal) {
+            return response()->json(['message' => 'Journal not found'], 404);
+        }
+
+        // Optional: Log admin deletion for audit
+        if ($isAdmin && $journal->user_id !== $loggedInUser->id) {
+        }
+
+        // Delete image if exists
         if ($journal->img) {
             Storage::disk('public')->delete($journal->img);
         }
 
         $journal->delete();
 
-        return ApiResponse::success(
-            'Journal deleted successfully',
-            201
-        );
+        $message = ($isAdmin && $journal->user_id !== $loggedInUser->id)
+            ? 'Journal deleted successfully by admin'
+            : 'Journal deleted successfully';
+
+        return ApiResponse::success($message);
     }
 }

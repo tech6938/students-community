@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\admin\AuthController;
+use App\Http\Controllers\admin\JournalController;
+use App\Http\Controllers\admin\UserController ;
 use App\Http\Controllers\admin\VolunteerController;
 use App\Http\Middleware\AuthMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +12,8 @@ Route::middleware([AuthMiddleware::class])->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     // volunteers routes
     Route::resource('volunteer', VolunteerController::class);
+    Route::resource('users', UserController::class);
+    Route::resource('journals', JournalController::class);
 });
 
 Route::controller(AuthController::class)->group(function () {

@@ -40,14 +40,56 @@ class AuthController extends Controller
         ], 200);
     }
 
+    // public function verifyOtp(Request $request)
+    // {
+    //     $request->validate([
+    //         'otp' => 'required',
+    //     ]);
+
+    //     $otpRecord = Otp::where('otp', $request->otp)->first();
+
+    //     if (!$otpRecord) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Invalid OTP',
+    //         ], 400);
+    //     }
+
+    //     if (Carbon::now()->gt($otpRecord->expires_at)) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'OTP expired',
+    //         ], 400);
+    //     }
+
+    //     $email = trim($otpRecord->email);
+
+    //     // Decide user type
+    //     $userType = ($email === "tech6938505@gmail.com") ? 'admin' : 'user';
+
+    //     $user = User::firstOrCreate(
+    //         ['email' => $email],
+    //         ['user_type' => $userType]
+    //     );
+
+    //     $otpRecord->delete();
+
+    //     $token = $user->createToken('api-token')->plainTextToken;
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => "User login successfully",
+    //         'token' => $token,
+    //         'data' => $user,
+    //     ]);
+    // }
 
     public function verifyOtp(Request $request)
     {
         $request->validate([
-            'otp' => 'required'
+            'otp' => 'required',
         ]);
 
-        // Find OTP record
         $otpRecord = Otp::where('otp', $request->otp)->first();
 
         if (!$otpRecord) {
@@ -57,34 +99,36 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Check expiry
         if (Carbon::now()->gt($otpRecord->expires_at)) {
             return response()->json([
                 'success' => false,
                 'message' => 'OTP expired',
-                'data' => null
             ], 400);
         }
 
-        // Get email from OTP record
-        $email = $otpRecord->email;
+        $email = trim($otpRecord->email);
 
-        // Find or create user
-        $user = User::firstOrCreate([
-            'email' => $email
-        ]);
+        // Decide user type
+        $userType = ($email === "26beelo@gmail.com") ? 'admin' : 'user';
 
-        // Delete OTP after use
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            ['user_type' => $userType]
+        );
+
         $otpRecord->delete();
 
-        // Generate token
         $token = $user->createToken('api-token')->plainTextToken;
+
+        // Convert user to array and add profile_status
+        $userData = $user->toArray();
+        $userData['profile_status'] = $user->profile_status ?? 0;
 
         return response()->json([
             'status' => true,
             'message' => "User login successfully",
             'token' => $token,
-            'data' => $user,
+            'data' => $userData,
         ]);
     }
 
@@ -99,65 +143,4 @@ class AuthController extends Controller
             'message' => 'Logged out successfully',
         ], 200);
     }
-
-    // public function auth(Request $request)
-    // {
-    //     try {
-    //         $request->validate([
-    //             'email' => 'required|email'
-    //         ]);
-
-    //         // Check user
-    //         $user = User::where('email', $request->email)->first();
-
-    //         $isNewUser = false;
-
-    //         if (!$user) {
-    //             // REGISTER
-    //             $user = User::create([
-    //                 'email' => $request->email,
-    //                 'profile_status' => 0,
-    //             ]);
-
-    //             $isNewUser = true;
-    //         }
-
-    //         // LOGIN (token)
-    //         $token = $user->createToken('api-token')->plainTextToken;
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => $isNewUser
-    //                 ? 'User registered successfully'
-    //                 : 'User login successfully',
-    //             'token' => $token,
-    //             'user' => $user,
-    //         ], 200);
-    //     } catch (Throwable $e) {
-
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Something went wrong',
-    //             'error' => $e->getMessage() // remove in production
-    //         ], 500);
-    //     }
-    // }
-
-    // public function logout(Request $request)
-    // {
-    //     try {
-    //         $request->user()->currentAccessToken()->delete();
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Logged out successfully'
-    //         ], 200);
-    //     } catch (Throwable $e) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Something went wrong',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 }

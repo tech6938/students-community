@@ -172,26 +172,41 @@ class StoryController extends Controller
     public function destroy($id)
     {
         try {
-            $story = Story::where('user_id', auth()->id())
-                ->where('id', $id)
-                ->first();
+            $loggedInUser = auth()->user();
+            $isAdmin = ($loggedInUser->user_type === 'admin');
 
-            if (!$story) {
-                return response()->json(['message' => 'Not found'], 404);
+            if ($isAdmin) {
+                $story = Story::find($id);
+            } else {
+                $story = Story::where('user_id', $loggedInUser->id)
+                    ->where('id', $id)
+                    ->first();
             }
 
+            if (!$story) {
+                return response()->json(['message' => 'Story not found'], 404);
+            }
+
+            if (!$isAdmin && $story->user_id !== $loggedInUser->id) {
+                return response()->json([
+                    'message' => 'Unauthorized: You can only delete your own story'
+                ], 403);
+            }
+
+            // Delete image if exists
             if ($story->img) {
                 Storage::disk('public')->delete($story->img);
             }
 
             $story->delete();
 
-            return ApiResponse::success(
-                'Stories retrieved successfully',
-                $story
-            );
+            $message = ($isAdmin && $story->user_id !== $loggedInUser->id)
+                ? 'Story deleted successfully by admin'
+                : 'Story deleted successfully';
+
+            return ApiResponse::success($message);
         } catch (Exception $e) {
-            return ApiResponse::error('Story not found', 404);
+            return ApiResponse::error('Failed to delete story: ' . $e->getMessage(), 500);
         }
     }
 }

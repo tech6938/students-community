@@ -200,12 +200,17 @@ class HiveBoardController extends Controller
     {
         try {
             $hiveBoard = HiveBoard::findOrFail($id);
+            $loggedInUser = request()->user();
 
-            // ✅ Only owner can delete
-            if ($hiveBoard->user_id !== request()->user()->id) {
+            // Check if user is admin or owner
+            $isAdmin = ($loggedInUser->user_type === 'admin');
+            $isOwner = ($hiveBoard->user_id === $loggedInUser->id);
+
+            // ✅ Admin can delete any record, owner can delete only their own
+            if (!$isAdmin && !$isOwner) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'Unauthorized: You can only delete your own HiveBoard'
                 ], 403);
             }
 
