@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Mail\AdminReportNotificationMail;
 use App\Models\Report;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ReportController extends Controller
 {
@@ -42,7 +46,7 @@ class ReportController extends Controller
         if (count($filled) !== 1) {
             return response()->json([
                 'status' => false,
-                'message' => 'Provide exactly one target (community, hiveboard, or story)'
+                'message' => 'Provide exactly one target (community, hiveboard, story, or journal)'
             ], 422);
         }
 
@@ -51,7 +55,7 @@ class ReportController extends Controller
             'community' => 'community_id',
             'hiveboard' => 'hiveboards_id',
             'story'     => 'stories_id',
-            'journal'     => 'journal_id',
+            'journal'   => 'journal_id',
         };
 
         if (empty($validated[$expectedColumn])) {
@@ -67,14 +71,30 @@ class ReportController extends Controller
             'community_id'  => $validated['community_id'] ?? null,
             'hiveboards_id' => $validated['hiveboards_id'] ?? null,
             'stories_id'    => $validated['stories_id'] ?? null,
-            'journal_id' => $validated['journal_id'] ?? null,
+            'journal_id'    => $validated['journal_id'] ?? null,
             'issue'         => $validated['issue'],
             'description'   => $validated['description'] ?? null,
         ]);
 
+        try {
+            $admins = User::where('user_type', 'admin')->get();
+
+            if ($admins->isNotEmpty()) {
+                foreach ($admins as $admin) {
+                    Mail::to($admin->email)->send(new AdminReportNotificationMail($report, $admin));
+                }
+
+                Log::info('Admin notification emails sent to ' . $admins->count() . ' admins');
+            } else {
+                Log::warning('No admin users found to send report notification');
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin notification emails: ' . $e->getMessage());
+        }
+
         return response()->json([
             'status' => true,
-            'message' => 'Report submitted successfully',
+            'message' => 'Report submitted successfully.',
             'data' => $report
         ], 201);
     }

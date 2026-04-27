@@ -11,6 +11,8 @@ class Story extends Model
         'title',
         'desc',
         'place',
+        'lng',
+        'lat',
         'tags',
         'img',
         'post_as',

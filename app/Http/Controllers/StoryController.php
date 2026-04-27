@@ -19,6 +19,8 @@ class StoryController extends Controller
             'title' => 'required',
             'desc' => 'required',
             'place' => 'nullable',
+            'lng' => 'nullable',
+            'lat' => 'nullable',
             'tags' => 'nullable|array',
             'tags.*' => 'string',
             'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -31,6 +33,8 @@ class StoryController extends Controller
             'title',
             'desc',
             'place',
+            'lng',
+            'lat',
             'tags',
             'post_as',
             'link_to_journal'
@@ -69,8 +73,14 @@ class StoryController extends Controller
 
                 return [
                     "id" => $q->id,
-                    "user_id" => $q->user_id,
+                    "post_type" => $q->post_type,
+                    "title" => $q->title,
+                    "desc" => $q->desc,
                     "place" => $q->place,
+                    "lng" => $q->lng,
+                    "lat" => $q->lat,
+                    "tags" => $q->tags,
+                    "user_id" => $q->user_id,
                     // "caption" => $q->caption,
                     "post_as" => $q->post_as,
                     "created_at" => $q->created_at,
@@ -119,23 +129,39 @@ class StoryController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $story = Story::where('user_id', auth()->id())
-                ->where('id', $id)
-                ->first();
+            $loggedInUser = auth()->user();
+            $isAdmin = ($loggedInUser->user_type === 'admin');
+
+            if ($isAdmin) {
+                $story = Story::find($id);
+            } else {
+                $story = Story::where('user_id', $loggedInUser->id)
+                    ->where('id', $id)
+                    ->first();
+            }
 
             if (!$story) {
-                return response()->json(['message' => 'Not found'], 404);
+                return response()->json(['message' => 'Story not found'], 404);
+            }
+
+            // Extra security check for normal users
+            if (!$isAdmin && $story->user_id !== $loggedInUser->id) {
+                return response()->json([
+                    'message' => 'Unauthorized: You can only update your own story'
+                ], 403);
             }
 
             $request->validate([
                 'post_type' => 'sometimes|integer',
-                'title' => 'sometimes',
-                'desc' => 'sometimes',
-                'place' => 'sometimes',
+                'title' => 'sometimes|string',
+                'desc' => 'sometimes|string',
+                'place' => 'sometimes|string',
+                'lng' => 'nullable',
+                'lat' => 'nullable',
                 'tags' => 'sometimes|array',
                 'tags.*' => 'string',
                 'img' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
-                'post_as' => 'sometimes',
+                'post_as' => 'sometimes|string',
                 'link_to_journal' => 'sometimes|boolean'
             ]);
 
@@ -144,6 +170,8 @@ class StoryController extends Controller
                 'title',
                 'desc',
                 'place',
+                'lng',
+                'lat',
                 'tags',
                 'post_as',
                 'link_to_journal'
@@ -157,14 +185,20 @@ class StoryController extends Controller
                 $data['img'] = $request->file('img')->store('stories', 'public');
             }
 
+            // Remove null values from data
+            $data = array_filter($data, function ($value) {
+                return !is_null($value);
+            });
+
             $story->update($data);
 
-            return ApiResponse::success(
-                'Stories retrieved successfully',
-                $story
-            );
+            $message = ($isAdmin && $story->user_id !== $loggedInUser->id)
+                ? 'Story updated successfully by admin'
+                : 'Story updated successfully';
+
+            return ApiResponse::success($message, $story);
         } catch (Exception $e) {
-            return ApiResponse::error('Story not found', 404);
+            return ApiResponse::error('Failed to update story: ' . $e->getMessage(), 500);
         }
     }
 

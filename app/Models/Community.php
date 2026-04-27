@@ -9,6 +9,8 @@ class Community extends Model
     protected $fillable = [
         'img',
         'place',
+        'lng',
+        'lat',
         'caption',
         'post_as',
         // 'link_to_journal',

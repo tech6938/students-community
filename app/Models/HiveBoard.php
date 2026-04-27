@@ -10,6 +10,8 @@ class HiveBoard extends Model
     protected $fillable = [
         'title',
         'place',
+        'lng',
+        'lat',
         'tags',
         'desc',
         'post_as',

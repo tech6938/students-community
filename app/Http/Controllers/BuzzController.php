@@ -214,12 +214,40 @@ class BuzzController extends Controller
     }
 
     // DELETE /api/buzz/delete/{id}
+    // public function destroy(Request $request, $id)
+    // {
+    //     try {
+    //         $buzz = Buzz::where('id', $id)
+    //             ->where('user_id', $request->user()->id)
+    //             ->first();
+
+    //         if (!$buzz) {
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'message' => 'Buzz not found'
+    //             ], 404);
+    //         }
+
+    //         $buzz->delete();
+
+    //         return ApiResponse::success(
+    //             'Buzz deleted successfully',
+    //             $buzz
+    //         );
+    //     } catch (Throwable $e) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Something went wrong',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function destroy(Request $request, $id)
     {
         try {
-            $buzz = Buzz::where('id', $id)
-                ->where('user_id', $request->user()->id)
-                ->first();
+            $user = $request->user();
+            $buzz = Buzz::find($id);
 
             if (!$buzz) {
                 return response()->json([
@@ -228,17 +256,36 @@ class BuzzController extends Controller
                 ], 404);
             }
 
+            $isOwner = ($buzz->user_id === $user->id);
+            $isAdmin = ($user->user_type === 'admin');
+
+            if (!$isOwner && !$isAdmin) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized: Only owner or admin can delete this buzz'
+                ], 403);
+            }
+
+            if ($buzz->img && file_exists(public_path($buzz->img))) {
+                unlink(public_path($buzz->img));
+            }
+
+            if ($buzz->journal) {
+                $buzz->journal->update(['buzz_id' => null, 'link_to_buzz' => 0]);
+            }
+
             $buzz->delete();
 
-            return ApiResponse::success(
-                'Buzz deleted successfully',
-                $buzz
-            );
+            $message = $isAdmin && !$isOwner
+                ? "Buzz deleted successfully by admin"
+                : "Buzz deleted successfully";
+
+            return ApiResponse::success($message, $buzz);
         } catch (Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage()
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }

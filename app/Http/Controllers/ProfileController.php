@@ -134,6 +134,7 @@ public function update(Request $request)
                 'abroad_school' => 'nullable|string|max:255',
                 'languages' => 'nullable|array',
                 'interests' => 'nullable|array',
+                'current_city' => 'nullable',
                 'profile_visibility' => 'sometimes|in:friends,public,private',
                 'images' => 'nullable|array|max:3',
                 'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',

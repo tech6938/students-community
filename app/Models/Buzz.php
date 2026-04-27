@@ -19,6 +19,7 @@ class Buzz extends Model
         'rating',
         'img',
         'desc',
+        'coords',
     ];
 
     protected $casts = [

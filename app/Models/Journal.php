@@ -15,7 +15,10 @@ class Journal extends Model
         'file',
         'video',
         'link_to_buzz',
-        'user_id'
+        'user_id',
+        'buzz_id',
+        'lng',
+        'lat'
     ];
 
     protected $hidden = ['file', 'video'];
@@ -42,5 +45,10 @@ class Journal extends Model
     public function users()
     {
         return $this->belongs(journal::class);
+    }
+
+        public function buzz()
+    {
+        return $this->belongsTo(Buzz::class);
     }
 }

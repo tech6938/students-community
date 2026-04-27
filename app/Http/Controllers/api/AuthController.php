@@ -40,50 +40,6 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // public function verifyOtp(Request $request)
-    // {
-    //     $request->validate([
-    //         'otp' => 'required',
-    //     ]);
-
-    //     $otpRecord = Otp::where('otp', $request->otp)->first();
-
-    //     if (!$otpRecord) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Invalid OTP',
-    //         ], 400);
-    //     }
-
-    //     if (Carbon::now()->gt($otpRecord->expires_at)) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'OTP expired',
-    //         ], 400);
-    //     }
-
-    //     $email = trim($otpRecord->email);
-
-    //     // Decide user type
-    //     $userType = ($email === "tech6938505@gmail.com") ? 'admin' : 'user';
-
-    //     $user = User::firstOrCreate(
-    //         ['email' => $email],
-    //         ['user_type' => $userType]
-    //     );
-
-    //     $otpRecord->delete();
-
-    //     $token = $user->createToken('api-token')->plainTextToken;
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => "User login successfully",
-    //         'token' => $token,
-    //         'data' => $user,
-    //     ]);
-    // }
-
     public function verifyOtp(Request $request)
     {
         $request->validate([

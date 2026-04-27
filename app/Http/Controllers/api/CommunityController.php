@@ -8,31 +8,11 @@ use App\Models\Community;
 use App\Models\JournalCommunitie;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CommunityController extends Controller
 {
     // GET /api/communities
-    // public function index()
-    // {
-    //     try {
-    //         $data = Community::latest()->get();
-
-
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Communities fetched successfuly',
-    //             'data' => $data
-    //         ]);
-    //     } catch (Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Something went wrong',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
     public function index(Request $request)
     {
         try {
@@ -83,6 +63,8 @@ class CommunityController extends Controller
             $validated = $request->validate([
                 'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
                 'place' => 'required|string|max:255',
+                'lng' => 'nullable',
+                'lat' => 'nullable',
                 'caption' => 'nullable|string',
                 'post_as' => 'required|string|max:255',
             ]);
@@ -136,32 +118,46 @@ class CommunityController extends Controller
         try {
             $community = Community::findOrFail($id);
 
-            // ✅ Optional: ensure user owns this record
-            if ($community->user_id !== $request->user()->id) {
+            $user = $request->user();
+
+            // ✅ Authorization (owner or admin)
+            if ($user->user_type !== 'admin' && $community->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'Unauthorized action'
                 ], 403);
             }
 
+            // ✅ Validation
             $validated = $request->validate([
                 'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-                'place' => 'sometimes|required|string|max:255',
+                'place' => 'nullable|string|max:255',
+                'lng' => 'nullable',
+                'lat' => 'nullable',
                 'caption' => 'nullable|string',
-                'post_as' => 'sometimes|required|string|max:255',
+                'post_as' => 'nullable|string|max:255',
             ]);
 
+            // ✅ Handle image update
             if ($request->hasFile('img')) {
+
+                // Delete old image if exists
+                if ($community->img && Storage::disk('public')->exists($community->img)) {
+                    Storage::disk('public')->delete($community->img);
+                }
+
+                // Store new image
                 $validated['img'] = $request->file('img')->store('communities', 'public');
             }
 
+            // ✅ Update data
             $community->update($validated);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Community updated successfully',
                 'data' => $community
-            ]);
+            ], 200);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,

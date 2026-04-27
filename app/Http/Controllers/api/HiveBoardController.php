@@ -30,10 +30,16 @@ class HiveBoardController extends Controller
 
                 return [
                     "id" => $q->id,
-                    "user_id" => $q->user_id,
+                    "title" => $q->title,
                     "place" => $q->place,
-                    // "caption" => $q->caption,
+                    "lng" => $q->lng,
+                    "lat" => $q->lat,
+                    "tags" => $q->tags,
+                    "desc" => $q->desc,
                     "post_as" => $q->post_as,
+                    "event_date" => $q->event_date,
+                    "user_id" => $q->user_id,
+                    // "caption" => $q->caption,
                     "created_at" => $q->created_at,
                     "updated_at" => $q->updated_at,
                     "file_url" => $q->file
@@ -69,6 +75,8 @@ class HiveBoardController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'place' => 'required|string|max:255',
+                'lng' => 'nullable',
+                'lat' => 'nullable',
                 'tags' => 'nullable|array',
                 'tags.*' => 'string|max:5000',
                 'desc' => 'required|string',
@@ -154,6 +162,8 @@ class HiveBoardController extends Controller
             $validated = $request->validate([
                 'title' => 'sometimes|string|max:255',
                 'place' => 'sometimes|string|max:255',
+                'lng'      => 'sometimes|nullable',
+                'lat'      => 'sometimes|nullable',
                 'tags' => 'nullable|array',
                 'tags.*' => 'string|max:50',
                 'desc' => 'sometimes|string',

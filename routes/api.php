@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('hive-boards', HiveBoardController::class);
     Route::apiResource('communities', CommunityController::class);
+    Route::post('communities/{id}',[ CommunityController::class, 'update']);
 
     /*
     |--------------------------------------------------------------------------
